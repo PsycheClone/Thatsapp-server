@@ -28,21 +28,24 @@ createConnection({
         password: process.env.DB_PASS,
         database: "thatsapp",
         entities: [
-            appDir + "/entity/*.js"
+            appDir + "/entity/User.js"
         ],
         synchronize: true,
-        logging: false
+        logging: true
     }).then(connection => {
 
     app.use(bodyParser.json());
+    app.use(function(req, res, next) {
+        res.header("Access-Control-Allow-Origin", "*");
+        res.header("Access-Control-Allow-Headers", "Authorization, Origin, X-Requested-With, Content-Type, Accept");
+        next()
+    });
 
     AppRoutes.forEach(route => {
         app[route.method](route.path, (request, response) => {
             route.action(request, response);
         });
     });
-
-    app.listen(3000, () => console.log('express running on 3000...'));
 
     server.on('connection', connection => {
         connection.on('message', message => {
@@ -54,5 +57,9 @@ createConnection({
             }
         });
     });
+
+    app.listen(3000, () => console.log('express running on 3000...'));
+
+
 
 }).catch(error => console.log("Cannot connect because of: " + error));

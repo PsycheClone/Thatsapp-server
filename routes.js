@@ -3,12 +3,12 @@ import {registerUserAction} from "./app_contents/controller/registerUserAction";
 
 export const AppRoutes = [
     {
-        path: "/register",
+        path: "/auth/register",
         method: "post",
         action: registerUserAction
     },
     {
-        path: "/login",
+        path: "/auth/login",
         method: "post",
         action: loginUserAction
     }
