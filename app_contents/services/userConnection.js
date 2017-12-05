@@ -1,21 +1,34 @@
-export class UserConnection {
+class UserConnection {
 
     constructor() {
       this.users = new Map();
     }
 
     register(connection, userName) {
-        let newUser = new User(connection, userName, new Date());
+        let dateformat = require('dateformat');
+        let newUser = new UserData(connection, userName, new Date());
         console.log(userName + ' connected.');
         this.users.set(userName, newUser);
 
         this.notifyUserOnline();
 
         connection.addEventListener('message', message => {
-            this.users.forEach(function (user, name, map) {
-                console.log('Broadcast: ' + message.data);
-                user.connection.send(message.data);
-            });
+            let parsedMessage = JSON.parse(message.data);
+            let addressee = this.users.get(parsedMessage.addressee);
+            let sender = this.users.get(parsedMessage.sender);
+            let newMessage = {
+                nickname: parsedMessage.sender,
+                message: parsedMessage.message,
+                timestamp: dateformat(new Date(), "dddd, mmmm dS, yyyy, HH:MM:ss TT"),
+                error: "none"
+            };
+            if(addressee && addressee.connection) {
+                sender.connection.send(JSON.stringify(newMessage));
+                addressee.connection.send(JSON.stringify(newMessage));
+            } else {
+                newMessage.error = "Message was not delivered.";
+                sender.connection.send(JSON.stringify(newMessage));
+            }
         });
 
         connection.addEventListener('close', () => {
@@ -34,6 +47,7 @@ export class UserConnection {
     }
 
     get(userName) {
+        console.log("get" + userName);
         return this.users.get(userName);
     }
 
@@ -46,12 +60,15 @@ export class UserConnection {
     }
 }
 
-class User {
+export let userConnection = new UserConnection();
+
+class UserData {
 
     constructor(connection, name, lastActive) {
         this.connection = connection;
         this.userdata = {
-            name: name,
+            nickname: name,
+            status: 'online',
             lastActive: lastActive
         };
     }

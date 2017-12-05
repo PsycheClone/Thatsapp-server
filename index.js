@@ -4,7 +4,7 @@ require("babel-polyfill");
 import "reflect-metadata";
 import {createConnection} from "typeorm";
 
-import {UserConnection} from "./app_contents/services/userConnection";
+import {userConnection} from "./app_contents/services/userConnection";
 import {AppRoutes} from "./routes";
 
 const app = require('express')();
@@ -12,9 +12,9 @@ const bodyParser = require('body-parser');
 
 const WebSocket = require('ws');
 const server = new WebSocket.Server({port: 8001});
-const userConnection = new UserConnection();
 const path = require('path');
 const appDir = path.dirname(require.main.filename);
+const jwtDecode = require('jwt-decode');
 
 process.on('unhandledRejection', error => {
     console.log(error.message);
@@ -28,7 +28,8 @@ createConnection({
         password: process.env.DB_PASS,
         database: "thatsapp",
         entities: [
-            appDir + "/entity/User.js"
+            appDir + "/entity/User.js",
+            appDir + "/entity/Contact.js"
         ],
         synchronize: true,
         logging: true
@@ -50,10 +51,12 @@ createConnection({
     server.on('connection', connection => {
         connection.on('message', message => {
             let parsedMessage = JSON.parse(message);
-            let userName;
-            if (userName = parsedMessage.newUser) {
-                //This will be replaced by a login service, establishing a connection when authenticated
-                userConnection.register(connection, userName);
+            console.log('got message: ' + JSON.stringify(parsedMessage));
+            if(parsedMessage.connect) {
+                let user = jwtDecode(parsedMessage.connect);
+                user.status = "online";
+                console.log(JSON.stringify(user));
+                userConnection.register(connection, user.nickname);
             }
         });
     });

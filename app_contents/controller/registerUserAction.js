@@ -4,6 +4,33 @@ import {User} from "../../entity/User";
 export async function registerUserAction(request, response) {
 
     console.log(request.body);
+
+    if(!request.body.nickname) {
+        response.status(400);
+        response.send({error: "You must provide a nickname."});
+        return;
+    }
+    if(!request.body.password) {
+        response.status(400);
+        response.send({error: "You must provide a password."});
+        return;
+    }
+    if(!request.body.firstName) {
+        response.status(400);
+        response.send({error: "You must provide a first name."});
+        return;
+    }
+    if(!request.body.lastName) {
+        response.status(400);
+        response.send({error: "You must provide a last name."});
+        return;
+    }
+    if(!request.body.email) {
+        response.status(400);
+        response.send({error: "You must provide an email."});
+        return;
+    }
+
     const userRepository = getManager().getRepository(User);
 
     let newUser = new User();
@@ -20,6 +47,7 @@ export async function registerUserAction(request, response) {
             response.send(entity);
         })
         .catch(error => {
-            response.send("An error happened!" + error);
+            response.status(401);
+            response.send({error: error.sqlMessage});
         });
 }
